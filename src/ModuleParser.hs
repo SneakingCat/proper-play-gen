@@ -3,6 +3,16 @@ module ModuleParser where
 import Text.ParserCombinators.Parsec
 import Control.Applicative ((<$>), (<*>), (*>))
 
+data DataType = Void
+              | String
+              | Integer
+              | UserDef String
+              deriving Show
+                     
+data Param = Value DataType
+           | Ptr DataType
+           deriving Show
+
 data ModuleDef = ModuleDecl String
                | MethodDecl String
                | StaticDecl String String
@@ -48,3 +58,41 @@ cppId = spaces *> ((:) <$> oneOf first <*> many (oneOf cont))
 -- Identify a '::'
 doubleColon :: Parser ()
 doubleColon = spaces *> string "::" *> return ()
+
+-- Identify and return a parameter
+param :: Parser Param
+param = try ptr
+        <|> try value
+        <?> "Pointer or value"
+        
+-- Identify and return a pointer
+ptr :: Parser Param
+ptr = Ptr <$> (spaces *> char '^' *> dataType)
+
+-- Identify and return a value
+value :: Parser Param
+value = Value <$> (spaces *> dataType)
+
+-- Identify and return a data type
+dataType :: Parser DataType
+dataType = try typeVoid
+           <|> try typeString
+           <|> try typeInteger
+           <|> try typeUserDef
+           <?> "Void, String, Integer or user defined type"
+           
+-- Identify and return a Void type
+typeVoid :: Parser DataType
+typeVoid = spaces *> string "Void" *> return Void
+
+-- Identify and return a String type
+typeString :: Parser DataType
+typeString = spaces *> string "String" *> return String
+
+-- Identify and return an Integer type
+typeInteger :: Parser DataType
+typeInteger = spaces *> string "Integer" *> return Integer
+
+-- Identify and return a user defined type
+typeUserDef :: Parser DataType
+typeUserDef = UserDef <$> cppId
