@@ -1,6 +1,5 @@
 module Foo where
 
-Foo.size
-count
-size
-Foo.create
+count :: ^Foo -> Integer;
+size :: ^Foo -> ^Bar;
+Foo.hepp :: Void;

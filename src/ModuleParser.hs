@@ -14,8 +14,8 @@ data Param = Value DataType
            deriving Show
 
 data ModuleDef = ModuleDecl String
-               | MethodDecl String
-               | StaticDecl String String
+               | MethodDecl String [Param]
+               | StaticDecl String String [Param]
                deriving Show
 
 -- Parse a module
@@ -34,11 +34,11 @@ moduleBody = try staticDecl
 
 -- Identify and return a method declaration
 methodDecl :: Parser ModuleDef
-methodDecl = MethodDecl <$> cppId
+methodDecl = MethodDecl <$> cppId <*> paramList
 
 -- Identify and return a static declaration
 staticDecl :: Parser ModuleDef
-staticDecl = StaticDecl <$> cppId <*> (char '.' *> cppId)
+staticDecl = StaticDecl <$> cppId <*> (char '.' *> cppId) <*> paramList
 
 -- Identify the 'module' keyword
 moduleKW :: Parser ()
@@ -59,13 +59,21 @@ cppId = spaces *> ((:) <$> oneOf first <*> many (oneOf cont))
 doubleColon :: Parser ()
 doubleColon = spaces *> string "::" *> return ()
 
+-- Identify a ';'
+semiColon :: Parser ()
+semiColon = spaces *> char ';' *> return ()
+
 -- Identify a '->'
 arrow :: Parser ()
 arrow = spaces *> string "->" *> return ()
 
--- Identify and return a parameter list
+-- Identify a list of parameters
 paramList :: Parser [Param]
-paramList = doubleColon *> ((:) <$> param <*> many (arrow *> param))
+paramList = between doubleColon semiColon params
+
+-- Return a sequence of parameters
+params :: Parser [Param]
+params = (:) <$> param <*> many (arrow *> param)
 
 -- Identify and return a parameter
 param :: Parser Param
