@@ -34,11 +34,11 @@ moduleBody = try staticDecl
 
 -- Identify and return a method declaration
 methodDecl :: Parser ModuleDef
-methodDecl = MethodDecl <$> (spaces *> cppId)
+methodDecl = MethodDecl <$> cppId
 
 -- Identify and return a static declaration
 staticDecl :: Parser ModuleDef
-staticDecl = StaticDecl <$> (spaces *> cppId) <*> (char '.' *> cppId)
+staticDecl = StaticDecl <$> cppId <*> (char '.' *> cppId)
 
 -- Identify the 'module' keyword
 moduleKW :: Parser ()
@@ -58,6 +58,14 @@ cppId = spaces *> ((:) <$> oneOf first <*> many (oneOf cont))
 -- Identify a '::'
 doubleColon :: Parser ()
 doubleColon = spaces *> string "::" *> return ()
+
+-- Identify a '->'
+arrow :: Parser ()
+arrow = spaces *> string "->" *> return ()
+
+-- Identify and return a parameter list
+paramList :: Parser [Param]
+paramList = doubleColon *> ((:) <$> param <*> many (arrow *> param))
 
 -- Identify and return a parameter
 param :: Parser Param

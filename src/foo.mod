@@ -1,4 +1,6 @@
-module foo where
+module Foo where
 
-foo.create
-boo
+Foo.size
+count
+size
+Foo.create
