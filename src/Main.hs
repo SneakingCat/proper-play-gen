@@ -2,7 +2,7 @@ module Main (
   main
   ) where
 
-import ModuleParser (ModuleDef, parse)
+import ModuleParser
 import ErlangWriter (render)
 import System.Environment (getArgs, getProgName)
 import System.Directory (doesFileExist)
@@ -35,18 +35,15 @@ parseArgs _                = Nothing
 
 processFile :: String -> IO ()
 processFile fileName = do
-  fileContent <- maybeReadFile fileName
-  case fileContent of
-    (Just fileContent') -> do
-      return ()
-    Nothing           ->
-      putStrLn $ "Cannot find file: " ++ fileName
-      
-maybeReadFile :: String -> IO (Maybe String)
-maybeReadFile fileName = do
   exist <- doesFileExist fileName
   if exist
-    then fmap Just (readFile fileName)
-    else return Nothing
-    
+    then do
+         parsingResult <- parseFromFile fileName
+         handleParsingResult parsingResult
+    else putStrLn $ "Cannot find file: " ++ fileName
+         
+handleParsingResult :: Either ParseError [ModuleDef] -> IO ()
+handleParsingResult (Left msg) = putStrLn $ show msg
+handleParsingResult (Right moduleDef) = putStrLn $ show moduleDef
+
       

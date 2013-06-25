@@ -3,9 +3,12 @@ module ModuleParser (
   , Param (..)
   , ModuleDef (..)
   , parse
+  , parseFromFile
+  , module Text.ParserCombinators.Parsec
   ) where
 
-import Text.ParserCombinators.Parsec hiding (parse)
+import Text.ParserCombinators.Parsec hiding (parse, parseFromFile)
+import qualified Text.ParserCombinators.Parsec as P
 import Control.Applicative ((<$>), (<*>), (*>))
 
 data DataType = Void
@@ -22,6 +25,9 @@ data ModuleDef = ModuleDecl String
                | MethodDecl String [Param]
                | StaticDecl String String [Param]
                deriving Show
+
+parseFromFile :: String -> IO (Either ParseError [ModuleDef])
+parseFromFile fileName = P.parseFromFile parse fileName
 
 parse :: Parser [ModuleDef]
 parse = (:) <$> moduleDecl <*> many1 bodyFragment
