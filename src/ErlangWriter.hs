@@ -1,21 +1,16 @@
 module ErlangWriter (
-  write
+  generate
   ) where
 
-import Control.Monad.Writer
+import ModuleParser (DataType(..), Param(..), ModuleDef(..))
+import Control.Monad.Writer (Writer, execWriter, tell)
+import Data.Char (toLower)
 
 type StringWriter = Writer String ()
 
-write :: String
-write = execWriter writeInternal
+generate :: [ModuleDef] -> String
+generate = execWriter . generateErlang
 
-writeInternal :: StringWriter
-writeInternal = do
-  tell "-module(hepp).\n\n"
-  tell "-export().\n\n"
-  mapM_ writeFunc ["a", "b"]
-  
-writeFunc :: String -> StringWriter
-writeFunc func = do
-  tell $ func ++ "() ->\n"
-  tell "   ok.\n\n"
+generateErlang :: [ModuleDef] -> StringWriter
+generateErlang (ModuleDecl moduleName:moduleBody) =
+  tell moduleName
