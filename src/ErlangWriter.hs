@@ -47,11 +47,14 @@ genModuleExports (def:defs) = do
                   
 genModuleExport :: ModuleDef -> StringWriter
 genModuleExport def =
-  case def of
-    (MethodDecl m p)   -> gen m p
-    (StaticDecl _ m p) -> gen m p
+  let
+    (f, ps) = case def of
+      (MethodDecl f ps)   -> (f, ps)
+      (StaticDecl _ f ps) -> (f, ps)
+  in
+   gen (strToLower f) (length ps)
   where
-    gen m p = tell $ (strToLower m) ++ "/" ++ show (length p)
+    gen f ps = tell $ f ++ "/" ++ show ps
 
 genMacroDefinitions :: StringWriter
 genMacroDefinitions = do
