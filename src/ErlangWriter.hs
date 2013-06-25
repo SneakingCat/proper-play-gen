@@ -1,5 +1,5 @@
 module ErlangWriter (
-  generate
+  render
   ) where
 
 import ModuleParser (DataType(..), Param(..), ModuleDef(..))
@@ -9,67 +9,71 @@ import Control.Monad (mapM_)
 
 type StringWriter = Writer String ()
 
-generate :: [ModuleDef] -> String
-generate = execWriter . generateErlang
+-- | Wrap the Writer monad
+render :: [ModuleDef] -> String
+render = execWriter . renderErlang
 
-generateErlang :: [ModuleDef] -> StringWriter
-generateErlang (ModuleDecl moduleName:moduleBody) = do
-  genModuleHeading
-  genModuleName $ strToLower moduleName
-  genCommunicatorExports
-  genModuleExports moduleBody
-  genMacroDefinitions
-  genStartStopFunctions
-  mapM_ genFunction moduleBody
+renderErlang :: [ModuleDef] -> StringWriter
+renderErlang (ModuleDecl moduleName:moduleBody) = do
+  renderModuleHeading
+  renderModuleName $ strToLower moduleName
+  renderCommunicatorExports
+  renderModuleExports moduleBody
+  renderMacroDefinitions
+  renderStartStopFunctions
+  mapM_ renderFunction moduleBody
   
-genModuleHeading :: StringWriter
-genModuleHeading = 
+renderModuleHeading :: StringWriter
+renderModuleHeading = 
   tell "%% Module and function names may have been converted to lower case\n"
   
-genModuleName :: String -> StringWriter    
-genModuleName m = tell $ "-module(" ++ m ++ ").\n\n"    
+renderModuleName :: String -> StringWriter    
+renderModuleName m = tell $ "-module(" ++ m ++ ").\n\n"    
                  
-genCommunicatorExports :: StringWriter                  
-genCommunicatorExports = do
+renderCommunicatorExports :: StringWriter                  
+renderCommunicatorExports = do
   tell "%% API to start and stop the C++ communicator\n"
   tell "-export([start/0,stop/0]).\n\n"
                   
-genModuleExports :: [ModuleDef] -> StringWriter
-genModuleExports []         = return ()
-genModuleExports (def:defs) = do
+renderModuleExports :: [ModuleDef] -> StringWriter
+renderModuleExports []         = return ()
+renderModuleExports (def:defs) = do
   tell "%% API for the system under test\n"
   tell "-export(["
-  genModuleExport def
+  renderModuleExport def
   mapM_ prependExportWithComma defs
   tell "]).\n\n"
   where
-    prependExportWithComma def = tell "," >> genModuleExport def
+    prependExportWithComma def = tell "," >> renderModuleExport def
                   
-genModuleExport :: ModuleDef -> StringWriter
-genModuleExport def =
+renderModuleExport :: ModuleDef -> StringWriter
+renderModuleExport def =
   let
     (f, ps) = functionData def
+    f'      = strToLower f
+    l       = length ps
   in
-   gen (strToLower f) (length ps)
+   renderExportedFunction f' l
   where
-    gen f ps = tell $ f ++ "/" ++ show ps
+    renderExportedFunction :: String -> Int -> StringWriter
+    renderExportedFunction f ps = tell $ f ++ "/" ++ show ps
 
-genMacroDefinitions :: StringWriter
-genMacroDefinitions = do
+renderMacroDefinitions :: StringWriter
+renderMacroDefinitions = do
   tell "%% Handy macros for C++ communication\n"
   tell "-define(ExtProg, \"./TestMain\").\n"
   tell "-define(CppComm, cpp_comm).\n\n"
   
-genStartStopFunctions :: StringWriter
-genStartStopFunctions = do
+renderStartStopFunctions :: StringWriter
+renderStartStopFunctions = do
   tell "%% Functions for start and stop\n"
   tell "start() ->\n"
   tell "    ?CppComm:start_link(?ExtProg).\n"
   tell "stop() ->\n"
   tell "    ?CppComm:stop().\n\n"
 
-genFunction :: ModuleDef -> StringWriter
-genFunction def =
+renderFunction :: ModuleDef -> StringWriter
+renderFunction def =
   let
     (f, ps) = functionData def
     -- In Erlang the parameters themselves are not that important,
@@ -81,11 +85,11 @@ genFunction def =
     l       = length ps
   in
    do
-     genFunctionHead f l
-     genFunctionBody f cs
+     renderFunctionHead f l
+     renderFunctionBody f cs
      
-genFunctionHead :: String -> Int -> StringWriter
-genFunctionHead f l = tell $ f ++ "(" ++ formalArgs l ++ ") ->\n"
+renderFunctionHead :: String -> Int -> StringWriter
+renderFunctionHead f l = tell $ f ++ "(" ++ formalArgs l ++ ") ->\n"
   where
     formalArgs :: Int -> String
     formalArgs 0 = ""
@@ -95,8 +99,9 @@ genFunctionHead f l = tell $ f ++ "(" ++ formalArgs l ++ ") ->\n"
     appendFormalArg :: String -> Int -> String
     appendFormalArg acc n = acc ++ ",Arg" ++ show n
 
-genFunctionBody :: String -> [Bool] -> StringWriter
-genFunctionBody f cs = tell $ "    ?CppComm({" ++ f ++ callArgs cs ++ "}).\n\n"
+renderFunctionBody :: String -> [Bool] -> StringWriter
+renderFunctionBody f cs = 
+  tell $ "    ?CppComm({" ++ f ++ callArgs cs ++ "}).\n\n"
   where
     callArgs :: [Bool] -> String
     callArgs [] = ""
