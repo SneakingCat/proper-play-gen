@@ -5,6 +5,7 @@ module Main (
 import ModuleParser (ModuleDef, parse)
 import ErlangWriter (render)
 import System.Environment (getArgs, getProgName)
+import System.Directory (doesFileExist)
 
 data UserCommand = Parse String
                  | Help
@@ -33,5 +34,19 @@ parseArgs ["-h"]           = Just Help
 parseArgs _                = Nothing
 
 processFile :: String -> IO ()
-processFile _ = return ()
+processFile fileName = do
+  fileContent <- maybeReadFile fileName
+  case fileContent of
+    (Just fileContent') -> do
+      return ()
+    Nothing           ->
+      putStrLn $ "Cannot find file: " ++ fileName
+      
+maybeReadFile :: String -> IO (Maybe String)
+maybeReadFile fileName = do
+  exist <- doesFileExist fileName
+  if exist
+    then fmap Just (readFile fileName)
+    else return Nothing
+    
       
