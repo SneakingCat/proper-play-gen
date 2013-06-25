@@ -48,9 +48,7 @@ genModuleExports (def:defs) = do
 genModuleExport :: ModuleDef -> StringWriter
 genModuleExport def =
   let
-    (f, ps) = case def of
-      (MethodDecl f ps)   -> (f, ps)
-      (StaticDecl _ f ps) -> (f, ps)
+    (f, ps) = functionData def
   in
    gen (strToLower f) (length ps)
   where
@@ -73,37 +71,54 @@ genStartStopFunctions = do
 genFunction :: ModuleDef -> StringWriter
 genFunction def =
   let
-    (f, ps) = case def of
-      (MethodDecl f ps)   -> (f, ps)
-      (StaticDecl _ f ps) -> (f, ps)
-    cs     = map shallConvertToBin ps
+    (f, ps) = functionData def
+    -- In Erlang the parameters themselves are not that important,
+    -- instead the number of parameters and if a parameter is a
+    -- list(char())/String and shall be converted to binary before
+    -- sending over the line
+    f'      = strToLower f    
+    cs      = map isString ps
+    l       = length ps
   in
-   gen (strToLower f) (length cs) cs  
+   do
+     genFunctionHead f l
+     genFunctionBody f cs
+     
+genFunctionHead :: String -> Int -> StringWriter
+genFunctionHead f l = tell $ f ++ "(" ++ formalArgs l ++ ") ->\n"
   where
-    gen :: String -> Int -> [Bool] -> StringWriter
-    gen f l cs = do
-      tell $ f ++ "(" ++ formals l ++ ") ->\n"
-      tell $ "    ?CppComm:call({" ++ f ++ (cargs cs) ++ "}).\n\n"      
-      
-    formals :: Int -> String
-    formals 0 = ""
-    formals 1 = "Arg1"
-    formals n = foldl (\a b -> a ++ ",Arg" ++ show b) "Arg1" [2..n]
+    formalArgs :: Int -> String
+    formalArgs 0 = ""
+    formalArgs 1 = "Arg1"
+    formalArgs n = foldl appendFormalArg "Arg1" [2..n]
     
-    cargs :: [Bool] -> String
-    cargs []     = ""
-    cargs (c:cs) = snd $ foldl (\(n, a) c -> (n+1, a ++ maybeConvertArg c n)) (2, (maybeConvertArg c 1)) cs
+    appendFormalArg :: String -> Int -> String
+    appendFormalArg acc n = acc ++ ",Arg" ++ show n
+
+genFunctionBody :: String -> [Bool] -> StringWriter
+genFunctionBody f cs = tell $ "    ?CppComm({" ++ f ++ callArgs cs ++ "}).\n\n"
+  where
+    callArgs :: [Bool] -> String
+    callArgs [] = ""
+    callArgs cs = snd $ foldl appendCallArg (1, "") cs
+    
+    appendCallArg :: (Int, String) -> Bool -> (Int, String)
+    appendCallArg (n, s) b = (n+1, s ++ renderCallArg n b)
+    
+    renderCallArg :: Int -> Bool -> String
+    renderCallArg n False = ",Arg" ++ show n
+    renderCallArg n True  = ",list_to_binary(Arg" ++ show n ++ ")"
+
+isString :: Param -> Bool
+isString (Ptr _) = False
+isString (Value v) =
+  case v of
+    String    -> True
+    otherwise -> False
 
 strToLower :: String -> String
 strToLower = map toLower
 
-shallConvertToBin :: Param -> Bool
-shallConvertToBin (Ptr _) = False
-shallConvertToBin (Value v) =
-  case v of
-    String    -> True
-    otherwise -> False
-    
-maybeConvertArg :: Bool -> Int -> String
-maybeConvertArg False n = ",Arg" ++ show n
-maybeConvertArg True n  = ",list_to_binary(Arg" ++ show n ++ ")"
+functionData :: ModuleDef -> (String, [Param])
+functionData (MethodDecl f ps)   = (f, ps)
+functionData (StaticDecl _ f ps) = (f, ps)
