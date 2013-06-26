@@ -82,8 +82,8 @@ renderFunction def =
     -- list(char())/String and shall be converted to binary before
     -- sending over the line
     f'      = strToLower f    
-    cs      = map isString ps
-    l       = length ps
+    cs      = map isString $ allButLast ps
+    l       = length cs
   in
    do
      renderFunctionComment def
@@ -128,6 +128,9 @@ isString (Value v) =
 
 strToLower :: String -> String
 strToLower = map toLower
+
+allButLast :: [a] -> [a]
+allButLast l = take ((length l) -1) l
 
 functionData :: ModuleDef -> (String, [Param])
 functionData (MethodDecl f ps)   = (f, ps)
