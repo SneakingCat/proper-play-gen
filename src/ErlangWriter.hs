@@ -102,7 +102,7 @@ renderFunctionHead f l = tell $ f ++ "(" ++ formalArgs l ++ ") ->\n"
 
 renderFunctionBody :: String -> [Bool] -> StringWriter
 renderFunctionBody f cs = 
-  tell $ "    ?CppComm({" ++ f ++ callArgs cs ++ "}).\n\n"
+  tell $ "    ?CppComm:call({" ++ f ++ callArgs cs ++ "}).\n\n"
   where
     callArgs :: [Bool] -> String
     callArgs [] = ""
