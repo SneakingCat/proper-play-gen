@@ -44,6 +44,10 @@ processFile fileName = do
          
 handleParsingResult :: Either ParseError [ModuleDef] -> IO ()
 handleParsingResult (Left msg) = putStrLn $ show msg
-handleParsingResult (Right moduleDef) = putStrLn $ show moduleDef
+handleParsingResult (Right moduleDef) = 
+  let
+    (fileName, fileContent) = render moduleDef
+  in
+   writeFile fileName fileContent
 
       

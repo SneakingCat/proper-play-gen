@@ -1,5 +1,5 @@
 module Foo where
 
-count :: ^Foo -> Integer;
+count :: String -> Integer;
 size :: ^Foo -> ^Bar;
 Foo.hepp :: Void;
