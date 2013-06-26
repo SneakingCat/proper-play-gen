@@ -52,12 +52,12 @@ renderModuleExport def =
   let
     (f, ps) = functionData def
     f'      = strToLower f
-    l       = length ps
-  in
-   renderExportedFunction f' l
+    a       = (length ps) -1 -- The ps list also contain the return value
+  in                         -- Subtract with one will never be less than zero
+   renderExportedFunction f' a
   where
     renderExportedFunction :: String -> Int -> StringWriter
-    renderExportedFunction f ps = tell $ f ++ "/" ++ show ps
+    renderExportedFunction f a = tell $ f ++ "/" ++ show a
 
 renderMacroDefinitions :: StringWriter
 renderMacroDefinitions = do
