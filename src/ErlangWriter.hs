@@ -10,8 +10,9 @@ import Control.Monad (mapM_)
 type StringWriter = Writer String ()
 
 -- | Wrap the Writer monad
-render :: [ModuleDef] -> String
-render = execWriter . renderErlang
+render :: [ModuleDef] -> (String, String)
+render moduleDef@(ModuleDecl moduleName:_) = 
+  ((strToLower moduleName) ++ ".erl", (execWriter . renderErlang) moduleDef)
 
 renderErlang :: [ModuleDef] -> StringWriter
 renderErlang (ModuleDecl moduleName:moduleBody) = do
