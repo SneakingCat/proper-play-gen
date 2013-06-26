@@ -86,9 +86,13 @@ renderFunction def =
     l       = length ps
   in
    do
+     renderFunctionComment def
      renderFunctionHead f l
      renderFunctionBody f cs
      
+renderFunctionComment :: ModuleDef -> StringWriter
+renderFunctionComment def = tell $ "%% " ++ show def ++ "\n"
+
 renderFunctionHead :: String -> Int -> StringWriter
 renderFunctionHead f l = tell $ f ++ "(" ++ formalArgs l ++ ") ->\n"
   where
