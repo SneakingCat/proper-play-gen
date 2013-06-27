@@ -51,6 +51,10 @@ renderPrologue = do
   
 renderEpilogue :: StringWriter
 renderEpilogue = do
+  tell " {\n" -- This parentesis just will follow an if {} else
+  tell "      // Unknown message\n"
+  tell "      assert(false);\n"
+  tell "    }\n\n"
   tell "    erl_free_compound(tuple);\n"
   tell "    erl_free_term(func);\n"
   tell "  }\n"
