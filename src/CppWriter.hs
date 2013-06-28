@@ -54,12 +54,22 @@ renderPrologue = do
 renderMsgReception :: ModuleDef -> StringWriter  
 renderMsgReception moduleDef =
   let
-    f = funcName moduleDef
+    f  = funcName moduleDef
+    rt = returnType moduleDef
   in 
    do
      tell $ "if (ErlComm::atomEqualsTo(func, \"" ++ f ++ "\")) {\n"
+     renderReturnValueAssignment rt
      tell "    } else "   
   
+renderReturnValueAssignment :: Param -> StringWriter   
+renderReturnValueAssignment (Value d) = 
+  case d of
+    Void      -> return ()
+    Integer   -> tell "      int ret = "
+    String    -> tell "      std::string ret = "
+    UserDef t -> tell $ "      " ++ t ++ " ret = "
+   
 renderEpilogue :: StringWriter
 renderEpilogue = do
   tell " {\n" -- This parentesis just will follow an if {} else
@@ -75,6 +85,10 @@ renderEpilogue = do
 funcName :: ModuleDef -> String
 funcName (MethodDecl funcName _)   = strToLower funcName
 funcName (StaticDecl _ funcName _) = strToLower funcName
+
+returnType :: ModuleDef -> Param
+returnType (MethodDecl _ p)   = last p
+returnType (StaticDecl _ _ p) = last p
 
 strToLower :: String -> String
 strToLower = map toLower
