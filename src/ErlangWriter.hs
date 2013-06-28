@@ -12,7 +12,7 @@ type StringWriter = Writer String ()
 -- | Wrap the Writer monad
 render :: [ModuleDef] -> (String, String)
 render moduleDef@(ModuleDecl moduleName:_) = 
-  ((strToLower moduleName) ++ ".erl", (execWriter . renderErlang) moduleDef)
+  (,) (strToLower moduleName) ++ ".erl" (execWriter . renderErlang) moduleDef
 
 renderErlang :: [ModuleDef] -> StringWriter
 renderErlang (ModuleDecl moduleName:moduleBody) = do
@@ -113,11 +113,11 @@ renderFunctionBody f cs =
     callArgs cs = snd $ foldl appendCallArg (1, "") cs
     
     appendCallArg :: (Int, String) -> Bool -> (Int, String)
-    appendCallArg (n, s) b = (n+1, s ++ renderCallArg n b)
+    appendCallArg (n, s) b = (n+1, s ++ assemblyCallArg n b)
     
-    renderCallArg :: Int -> Bool -> String
-    renderCallArg n False = ",Arg" ++ show n
-    renderCallArg n True  = ",list_to_binary(Arg" ++ show n ++ ")"
+    assemblyCallArg :: Int -> Bool -> String
+    assemblyCallArg n False = ",Arg" ++ show n
+    assemblyCallArg n True  = ",list_to_binary(Arg" ++ show n ++ ")"
 
 isString :: Param -> Bool
 isString (Ptr _) = False

@@ -24,6 +24,7 @@ renderCpp (ModuleDecl moduleName:moduleBody) = do
   tell "\n"
   renderBufSize
   renderPrologue
+  mapM_ renderMsgReception moduleBody
   renderEpilogue
   
 renderInclude :: String -> StringWriter
@@ -48,6 +49,16 @@ renderPrologue = do
   tell "    // Pick the first element of the tuple - the function to execute\n"
   tell "    ETERM *func = erl_element(1, tuple);\n"
   tell "    assert(ERL_IS_ATOM(func));\n\n"
+  tell "    "
+  
+renderMsgReception :: ModuleDef -> StringWriter  
+renderMsgReception moduleDef =
+  let
+    f = funcName moduleDef
+  in 
+   do
+     tell $ "if (ErlComm::atomEqualsTo(func, \"" ++ f ++ "\")) {\n"
+     tell "    } else "   
   
 renderEpilogue :: StringWriter
 renderEpilogue = do
@@ -61,3 +72,9 @@ renderEpilogue = do
   tell "  return 0;\n"
   tell "}\n"
   
+funcName :: ModuleDef -> String
+funcName (MethodDecl funcName _)   = strToLower funcName
+funcName (StaticDecl _ funcName _) = strToLower funcName
+
+strToLower :: String -> String
+strToLower = map toLower
