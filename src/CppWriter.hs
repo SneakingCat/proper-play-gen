@@ -59,22 +59,29 @@ renderMsgReception moduleDef =
   in 
    do
      tell $ "if (ErlComm::atomEqualsTo(func, \"" ++ f ++ "\")) {\n"
-     renderReturnValueAssignment rt
+     maybeRenderObjPtrAssignment moduleDef
+     maybeRenderReturnValueAssignment rt
+     renderCallSite moduleDef
      tell "    } else "   
   
-renderReturnValueAssignment :: Param -> StringWriter   
-renderReturnValueAssignment (Value d) = 
-  case d of
-    Integer   -> tell "      int ret = "
-    String    -> tell "      std::string ret = "
-    UserDef t -> tell $ "      " ++ t ++ " ret = "
-    _         -> return ()
-renderReturnValueAssignment (Ptr d) =
-  case d of
-    Void      -> tell "      void *ret = "
-    Integer   -> tell "      int *ret ="
-    String    -> tell "      char *ret = "
-    UserDef t -> tell $ "      " ++ t ++ " *ret = "
+maybeRenderObjPtrAssignment :: ModuleDef -> StringWriter
+maybeRenderObjPtrAssignment (MethodDecl _ ps) =
+  let
+    t  = ps !! 0
+    s  = typeAsStr t
+  in
+   tell $ "      " ++ s ++ "obj = get cool value from tuple;\n"
+maybeRenderObjPtrAssignment _ = return ()
+   
+maybeRenderReturnValueAssignment :: Param -> StringWriter
+maybeRenderReturnValueAssignment (Value Void) =
+  tell "      "
+maybeRenderReturnValueAssignment p =
+  tell $ "      " ++ typeAsStr p ++ " ret = "
+
+renderCallSite :: ModuleDef -> StringWriter
+renderCallSite (StaticDecl m f _) = tell $ m ++ "::" ++ f
+renderCallSite (MethodDecl f _)   = tell $ "obj->" ++ f
        
 renderEpilogue :: StringWriter
 renderEpilogue = do
@@ -95,6 +102,20 @@ funcName (StaticDecl _ funcName _) = strToLower funcName
 returnType :: ModuleDef -> Param
 returnType (MethodDecl _ p)   = last p
 returnType (StaticDecl _ _ p) = last p
+
+typeAsStr :: Param -> String
+typeAsStr (Value t) =
+  case t of
+    Integer   -> "int"
+    String    -> "std::string"
+    Void      -> "void"
+    UserDef u -> u
+typeAsStr (Ptr t) =
+  case t of
+    Integer   -> "int *"
+    String    -> "char *"
+    Void      -> "void *"
+    UserDef u -> u ++ " *"
 
 strToLower :: String -> String
 strToLower = map toLower
