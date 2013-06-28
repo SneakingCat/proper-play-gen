@@ -65,11 +65,17 @@ renderMsgReception moduleDef =
 renderReturnValueAssignment :: Param -> StringWriter   
 renderReturnValueAssignment (Value d) = 
   case d of
-    Void      -> return ()
     Integer   -> tell "      int ret = "
     String    -> tell "      std::string ret = "
     UserDef t -> tell $ "      " ++ t ++ " ret = "
-   
+    _         -> return ()
+renderReturnValueAssignment (Ptr d) =
+  case d of
+    Void      -> tell "      void *ret = "
+    Integer   -> tell "      int *ret ="
+    String    -> tell "      char *ret = "
+    UserDef t -> tell $ "      " ++ t ++ " *ret = "
+       
 renderEpilogue :: StringWriter
 renderEpilogue = do
   tell " {\n" -- This parentesis just will follow an if {} else
