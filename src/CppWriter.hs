@@ -90,6 +90,11 @@ renderReturnMessage (Value Void) = do
   tell "      erl_encode(ok, buf);\n"
   tell "      ErlComm::send(buf, erl_term_len(ok));\n"
   tell "      erl_free_term(ok);\n"
+renderReturnMessage (Ptr _) = do
+  tell "      ETERM *ptr = erl_mk_ulonglong(reinterpret_cast<unsigned long long>(ret));\n"
+  tell "      erl_encode(ptr, buf);\n"
+  tell "      ErlComm::send(buf, erl_term_len(ptr));\n"
+  tell "      erl_free_term(ptr);\n"
                                     
 renderEpilogue :: StringWriter
 renderEpilogue = do
