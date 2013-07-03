@@ -87,15 +87,18 @@ renderCallSite (MethodDecl f _)   = tell $ "obj->" ++ f
 renderReturnMessage :: Param -> StringWriter
 renderReturnMessage (Value Void) = do
   tell "      ETERM *ok = erl_mk_atom(\"ok\");\n"
-  tell "      erl_encode(ok, buf);\n"
-  tell "      ErlComm::send(buf, erl_term_len(ok));\n"
-  tell "      erl_free_term(ok);\n"
+  renderReturnMessageEpilogue "ok"
 renderReturnMessage (Ptr _) = do
-  tell "      ETERM *ptr = erl_mk_ulonglong(reinterpret_cast<unsigned long long>(ret));\n"
-  tell "      erl_encode(ptr, buf);\n"
-  tell "      ErlComm::send(buf, erl_term_len(ptr));\n"
-  tell "      erl_free_term(ptr);\n"
-                                    
+  tell "      ETERM *ptr =\n"
+  tell "        erl_mk_ulonglong(reinterpret_cast<unsigned long long>(ret));\n"
+  renderReturnMessageEpilogue "ptr"
+
+renderReturnMessageEpilogue :: String -> StringWriter
+renderReturnMessageEpilogue t = do
+  tell $ "      erl_encode(" ++ t ++ ", buf);\n"
+  tell $ "      ErlComm::send(buf, erl_term_len(" ++ t ++ "));\n"
+  tell $ "      erl_free_term(" ++ t ++ ");\n"
+
 renderEpilogue :: StringWriter
 renderEpilogue = do
   tell " {\n" -- This parentesis just will follow an if {} else
