@@ -5,7 +5,7 @@ module CppWriter (
 import ModuleParser (DataType(..), Param(..), ModuleDef(..))
 import Control.Monad.Writer (Writer, execWriter, tell)
 import Data.Char (toLower)
-import Control.Monad (mapM_)
+import Control.Monad (mapM_, liftM)
 
 type StringWriter = Writer String ()
 
@@ -88,6 +88,10 @@ renderReturnMessage :: Param -> StringWriter
 renderReturnMessage (Value Void) = do
   tell "      ETERM *ok = erl_mk_atom(\"ok\");\n"
   renderReturnMessageEpilogue "ok"
+renderReturnMessage (Value Integer) = do
+  tell "      ETERM *anInt = erl_mk_int(ret);\n"
+  renderReturnMessageEpilogue "anInt"
+renderReturnMessage (Value _) = error "Cannot handle type"
 renderReturnMessage (Ptr _) = do
   tell "      ETERM *ptr =\n"
   tell "        erl_mk_ulonglong(reinterpret_cast<unsigned long long>(ret));\n"
