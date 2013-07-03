@@ -54,7 +54,7 @@ renderPrologue = do
 renderMsgReception :: ModuleDef -> StringWriter  
 renderMsgReception moduleDef =
   let
-    f  = funcName moduleDef
+    f  = funcName moduleDef -- f will be lower case
     rt = returnType moduleDef
   in 
    do
@@ -62,6 +62,7 @@ renderMsgReception moduleDef =
      maybeRenderObjPtrAssignment moduleDef
      maybeRenderReturnValueAssignment rt
      renderCallSite moduleDef
+     renderReturnMessage rt
      tell "    } else "   
   
 maybeRenderObjPtrAssignment :: ModuleDef -> StringWriter
@@ -83,6 +84,13 @@ renderCallSite :: ModuleDef -> StringWriter
 renderCallSite (StaticDecl m f _) = tell $ m ++ "::" ++ f
 renderCallSite (MethodDecl f _)   = tell $ "obj->" ++ f
        
+renderReturnMessage :: Param -> StringWriter
+renderReturnMessage (Value Void) = do
+  tell "      ETERM *ok = erl_mk_atom(\"ok\");\n"
+  tell "      erl_encode(ok, buf);\n"
+  tell "      ErlComm::send(buf, erl_term_len(ok));\n"
+  tell "      erl_free_term(ok);\n"
+                                    
 renderEpilogue :: StringWriter
 renderEpilogue = do
   tell " {\n" -- This parentesis just will follow an if {} else
