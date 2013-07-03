@@ -55,6 +55,7 @@ renderMsgReception :: ModuleDef -> StringWriter
 renderMsgReception moduleDef =
   let
     f  = funcName moduleDef -- f will be lower case
+    ps = params moduleDef
     rt = returnType moduleDef
   in 
    do
@@ -118,6 +119,10 @@ renderEpilogue = do
 funcName :: ModuleDef -> String
 funcName (MethodDecl funcName _)   = strToLower funcName
 funcName (StaticDecl _ funcName _) = strToLower funcName
+
+params :: ModuleDef -> [Param]
+params (MethodDecl _ p)   = p
+params (StaticDecl _ _ p) = p
 
 returnType :: ModuleDef -> Param
 returnType (MethodDecl _ p)   = last p
