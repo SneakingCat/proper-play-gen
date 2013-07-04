@@ -3,8 +3,8 @@ module CppWriter (
   ) where
 
 import ModuleParser (DataType(..), Param(..), ModuleDef(..))
+import ListManip (strToLower, allButLast)
 import Control.Monad.Writer (Writer, execWriter, tell)
-import Data.Char (toLower)
 import Control.Monad (mapM_, liftM)
 
 type StringWriter = Writer String ()
@@ -147,9 +147,6 @@ params :: ModuleDef -> [Param]
 params (MethodDecl _ p)   = p
 params (StaticDecl _ _ p) = p
 
-allButLast :: [a] -> [a]
-allButLast l = take ((length l) -1) l
-
 returnType :: ModuleDef -> Param
 returnType (MethodDecl _ p)   = last p
 returnType (StaticDecl _ _ p) = last p
@@ -167,6 +164,3 @@ typeAsStr (Ptr t) =
     String    -> "char *"
     Void      -> "void *"
     UserDef u -> u ++ " *"
-
-strToLower :: String -> String
-strToLower = map toLower

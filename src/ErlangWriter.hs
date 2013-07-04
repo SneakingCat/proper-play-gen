@@ -3,8 +3,8 @@ module ErlangWriter (
   ) where
 
 import ModuleParser (DataType(..), Param(..), ModuleDef(..))
+import ListManip (strToLower, allButLast)
 import Control.Monad.Writer (Writer, execWriter, tell)
-import Data.Char (toLower)
 import Control.Monad (mapM_)
 
 type StringWriter = Writer String ()
@@ -125,12 +125,6 @@ isString (Value v) =
   case v of
     String    -> True
     otherwise -> False
-
-strToLower :: String -> String
-strToLower = map toLower
-
-allButLast :: [a] -> [a]
-allButLast l = take ((length l) -1) l
 
 functionData :: ModuleDef -> (String, [Param])
 functionData (MethodDecl f ps)   = (f, ps)
