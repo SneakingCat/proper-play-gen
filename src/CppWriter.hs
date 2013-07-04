@@ -95,7 +95,7 @@ renderFormalArguments [] = tell "();\n"
 renderFormalArguments [a] = tell $ "(" ++ depictArgument 1 a ++ ");\n"
 renderFormalArguments (a:as) = 
   tell $ "("
-  ++ (snd $ foldl appendArgument (2, depictArgument 1 a) as) ++ ");\n"
+  ++ (snd $ foldl appendArgument (3, depictArgument 2 a) as) ++ ");\n"
   where
     appendArgument (n, s) p = (n+1, s ++ ", " ++ depictArgument n p)
 
