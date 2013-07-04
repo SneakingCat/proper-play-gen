@@ -55,7 +55,7 @@ renderMsgReception :: ModuleDef -> StringWriter
 renderMsgReception moduleDef =
   let
     f  = funcName moduleDef -- f will be lower case
-    ps = params moduleDef
+    as = allButLast $ params moduleDef
     rt = returnType moduleDef
   in 
    do
@@ -64,6 +64,7 @@ renderMsgReception moduleDef =
      maybeRenderObjPtrAssignment moduleDef
      maybeRenderReturnValueAssignment rt
      renderCallSite moduleDef
+     renderFormalArguments as
      renderReturnMessage rt
      tell "    } else "   
   
@@ -89,6 +90,23 @@ renderCallSite :: ModuleDef -> StringWriter
 renderCallSite (StaticDecl m f _) = tell $ m ++ "::" ++ f
 renderCallSite (MethodDecl f _)   = tell $ "obj->" ++ f
        
+renderFormalArguments :: [Param] -> StringWriter
+renderFormalArguments [] = tell "();\n"
+renderFormalArguments [a] = tell $ "(" ++ depictArgument 1 a ++ ");\n"
+renderFormalArguments (a:as) = 
+  tell $ "("
+  ++ (snd $ foldl appendArgument (2, depictArgument 1 a) as) ++ ");\n"
+  where
+    appendArgument (n, s) p = (n+1, s ++ ", " ++ depictArgument n p)
+
+depictArgument :: Int -> Param -> String
+depictArgument n t@(Ptr _) = "ErlComm::ptrFromIntegral<" 
+                             ++ typeAsStr t 
+                             ++ ">(erl_element(" ++ show n ++ ", tuple))"
+depictArgument n (Value String) = "ErlComm::fromBinary(erl_element("
+                                  ++ show n ++ ", tuple))"
+depictArgument _ _ = error "Cannot handle this type"
+
 renderReturnMessage :: Param -> StringWriter
 renderReturnMessage (Value Void) = do
   tell "      ETERM *ok = erl_mk_atom(\"ok\");\n"
@@ -96,7 +114,7 @@ renderReturnMessage (Value Void) = do
 renderReturnMessage (Value Integer) = do
   tell "      ETERM *anInt = erl_mk_int(ret);\n"
   renderReturnMessageEpilogue "anInt"
-renderReturnMessage (Value _) = error "Cannot handle type"
+renderReturnMessage (Value _) = error "Cannot handle this type"
 renderReturnMessage (Ptr _) = do
   tell "      ETERM *ptr =\n"
   tell "        erl_mk_ulonglong(reinterpret_cast<unsigned long long>(ret));\n"
@@ -127,6 +145,9 @@ funcName (StaticDecl _ funcName _) = strToLower funcName
 params :: ModuleDef -> [Param]
 params (MethodDecl _ p)   = p
 params (StaticDecl _ _ p) = p
+
+allButLast :: [a] -> [a]
+allButLast l = take ((length l) -1) l
 
 returnType :: ModuleDef -> Param
 returnType (MethodDecl _ p)   = last p
