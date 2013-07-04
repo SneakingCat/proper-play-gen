@@ -12,7 +12,7 @@ type StringWriter = Writer String ()
 -- | Wrap the Writer monad
 render :: [ModuleDef] -> (String, String)
 render moduleDef@(ModuleDecl moduleName:_) = 
-  (,) (strToLower moduleName) ++ ".erl" (execWriter . renderErlang) moduleDef
+  (,) (strToLower moduleName ++ ".erl") ((execWriter . renderErlang) moduleDef)
 
 renderErlang :: [ModuleDef] -> StringWriter
 renderErlang (ModuleDecl moduleName:moduleBody) = do

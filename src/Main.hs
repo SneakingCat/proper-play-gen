@@ -4,6 +4,9 @@ module Main (
 
 import ModuleParser
 import ErlangWriter (render)
+import qualified ErlangWriter as E
+import CppWriter (render)
+import qualified CppWriter as C
 import System.Environment (getArgs, getProgName)
 import System.Directory (doesFileExist)
 
@@ -46,8 +49,11 @@ handleParsingResult :: Either ParseError [ModuleDef] -> IO ()
 handleParsingResult (Left msg) = putStrLn $ show msg
 handleParsingResult (Right moduleDef) = 
   let
-    (fileName, fileContent) = render moduleDef
+    (fileNameErl, fileContentErl) = E.render moduleDef
+    (fileNameCpp, fileContentCpp) = C.render moduleDef
   in
-   writeFile fileName fileContent
+   do
+     writeFile fileNameErl fileContentErl
+     writeFile fileNameCpp fileContentCpp
 
       
