@@ -55,7 +55,7 @@ renderMsgReception :: ModuleDef -> StringWriter
 renderMsgReception moduleDef =
   let
     f  = funcName moduleDef -- f will be lower case
-    as = allButLast $ params moduleDef
+    as = drop 1 $ allButLast $ params moduleDef
     rt = returnType moduleDef
   in 
    do
@@ -77,7 +77,8 @@ maybeRenderObjPtrAssignment (MethodDecl _ ps) =
     t  = ps !! 0
     s  = typeAsStr t
   in
-   tell $ "      " ++ s ++ "obj = get cool value from tuple;\n"
+   tell $ "      " ++ s ++ "obj = ErlComm::ptrFromIntegral<"
+   ++ s ++ ">(erl_element(2, tuple));\n"
 maybeRenderObjPtrAssignment _ = return ()
    
 maybeRenderReturnValueAssignment :: Param -> StringWriter
@@ -92,10 +93,10 @@ renderCallSite (MethodDecl f _)   = tell $ "obj->" ++ f
        
 renderFormalArguments :: [Param] -> StringWriter
 renderFormalArguments [] = tell "();\n"
-renderFormalArguments [a] = tell $ "(" ++ depictArgument 1 a ++ ");\n"
+renderFormalArguments [a] = tell $ "(" ++ depictArgument 3 a ++ ");\n"
 renderFormalArguments (a:as) = 
   tell $ "("
-  ++ (snd $ foldl appendArgument (3, depictArgument 2 a) as) ++ ");\n"
+  ++ (snd $ foldl appendArgument (4, depictArgument 3 a) as) ++ ");\n"
   where
     appendArgument (n, s) p = (n+1, s ++ ", " ++ depictArgument n p)
 
