@@ -60,12 +60,16 @@ renderMsgReception moduleDef =
   in 
    do
      tell $ "if (ErlComm::atomEqualsTo(func, \"" ++ f ++ "\")) {\n"
+     renderMsgComment moduleDef
      maybeRenderObjPtrAssignment moduleDef
      maybeRenderReturnValueAssignment rt
      renderCallSite moduleDef
      renderReturnMessage rt
      tell "    } else "   
   
+renderMsgComment :: ModuleDef -> StringWriter   
+renderMsgComment def = tell $ "      // " ++ show def ++ "\n"
+   
 maybeRenderObjPtrAssignment :: ModuleDef -> StringWriter
 maybeRenderObjPtrAssignment (MethodDecl _ ps) =
   let
